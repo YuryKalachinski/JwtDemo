@@ -5,8 +5,10 @@ import com.kalachinski.JWT.domain.User;
 import com.kalachinski.JWT.security.JwtTokenProvider;
 import com.kalachinski.JWT.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -18,13 +20,11 @@ public class AuthController {
 
     private UserService userService;
     private JwtTokenProvider jwtTokenProvider;
-    private PasswordEncoder passwordEncoder;
 
     @Autowired
-    public AuthController(UserService userService, JwtTokenProvider jwtTokenProvider, PasswordEncoder passwordEncoder) {
+    public AuthController(UserService userService, JwtTokenProvider jwtTokenProvider) {
         this.userService = userService;
         this.jwtTokenProvider = jwtTokenProvider;
-        this.passwordEncoder = passwordEncoder;
     }
 
     @PostMapping("/auth")
@@ -36,11 +36,16 @@ public class AuthController {
 
     @Validated
     @PostMapping("/register")
-    public String registerUser(@RequestBody @Valid AuthRequest authRequest) {
-        userService.register(User.builder()
+    public User registerUser(@RequestBody @Valid AuthRequest authRequest) {
+        return userService.register(User.builder()
                 .login(authRequest.getLogin())
-                .password(passwordEncoder.encode(authRequest.getPassword()))
+                .password(authRequest.getPassword())
                 .build());
-        return "OK";
+    }
+
+    @GetMapping("/principal")
+    public Authentication getAuthentication() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return auth;
     }
 }
