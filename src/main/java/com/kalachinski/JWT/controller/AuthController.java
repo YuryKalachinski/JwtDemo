@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
 
+@Validated
 @RestController
 public class AuthController {
 
@@ -28,23 +29,22 @@ public class AuthController {
     }
 
     @PostMapping("/auth")
-    public String auth(@RequestBody AuthRequest authRequest) {
+    public String auth(@RequestBody @Valid AuthRequest authRequest) {
         User user = userService.findByLoginAndPassword(authRequest.getLogin(), authRequest.getPassword());
-        jwtTokenProvider.generateToken(user.getLogin());
-        return "OK";
+        return jwtTokenProvider.generateToken(user.getLogin());
     }
 
-    @Validated
     @PostMapping("/register")
-    public User registerUser(@RequestBody @Valid AuthRequest authRequest) {
-        return userService.register(User.builder()
+    public String registerUser(@RequestBody @Valid AuthRequest authRequest) {
+        userService.register(User.builder()
                 .login(authRequest.getLogin())
                 .password(authRequest.getPassword())
                 .build());
+        return "User " + authRequest.getLogin() + " is registered.";
     }
 
     @GetMapping("/principal")
-    public Authentication getAuthentication() {
+    public Authentication getUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         return auth;
     }
